@@ -146,6 +146,13 @@ struct Spektakl{
 };
 
 struct Tydzien{
+    struct Dyspo{
+        Dyspo(Pracownik* pracownik, Tydzien* tydzien) : pracownik(pracownik), tydzien(tydzien) {}
+        Pracownik* pracownik;
+        Tydzien* tydzien;
+        bool zmiany[7][3] = {false};
+    };
+
     Teatr* teatr;
     double pierwszy_dzien;
     Spektakl* dzien[7][3];
