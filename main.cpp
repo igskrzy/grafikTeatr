@@ -151,18 +151,45 @@ struct Tydzien{
         Pracownik* pracownik;
         Tydzien* tydzien;
         bool zmiany[7][3] = {false};
-    };
 
+        void wpisz_dyspo(){
+            cout << "Dyspo dla: ";
+            pracownik->wypisz_krotko();
+            for(int i=0; i<7; ++i){
+                for(int j=0; j<3; ++j){
+                    if(tydzien->dzien[i][j] != nullptr){
+                        tydzien->dzien[i][j]->wypisz_krotko();
+                        cin >> zmiany[i][j];
+                    }
+                }
+            }
+            cout << endl;
+            tydzien->dyspo[pracownik->id] = this;
+        }
+    };
     Teatr* teatr;
     double pierwszy_dzien;
     Spektakl* dzien[7][3];
+    Dyspo** dyspo;
 
     Tydzien(Teatr* teatr, double pierwszy_dzien) : teatr(teatr), pierwszy_dzien(pierwszy_dzien) {
+        dyspo = new Dyspo*[teatr->il_pracownikow];
+        for(int i=0; i<teatr->il_pracownikow; ++i){
+            dyspo[i] = new Dyspo(teatr->pracownicy[i], this);
+        }
+
          for(int i = 0; i < 7; ++i) {
             for(int j = 0; j < 3; ++j) {
                 dzien[i][j] = nullptr;
             }
         }
+    }
+
+    ~Tydzien() {
+        for(int i = 0; i < teatr->il_pracownikow; ++i) {
+            delete dyspo[i];
+        }
+        delete[] dyspo;
     }
 
     void wpisz_spektakle(){
@@ -177,6 +204,12 @@ struct Tydzien{
                 dzien[i][j] = s;
             }
             data += 0.1;
+        }
+    }
+
+    void wpisz_dyspo(){
+        for(int i=0; i<teatr->il_pracownikow; ++i){
+            dyspo[i]->wpisz_dyspo();
         }
     }
 
@@ -252,5 +285,6 @@ int main(){
     teatrStary.wypisz();
     Tydzien t1(&teatrStary, 2.40325);
     t1.wpisz_spektakle();
+    t1.wpisz_dyspo();
     t1.wypisz_grafik();
 }
