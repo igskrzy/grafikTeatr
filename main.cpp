@@ -1,8 +1,8 @@
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 enum Stanowisko { SZATNIARZ, PROGRAMOWY, BUFETOWY };
-
 struct Pracownik{
     Pracownik(string imie, string nazwisko, Stanowisko stanowisko, int il_minut) :  imie(imie), nazwisko(nazwisko), id(-1), stanowisko(stanowisko), il_minut(il_minut){}
     string imie;
@@ -55,6 +55,50 @@ struct Teatr{
         for(int i=0; i<il_pracownikow; ++i){
             if(pracownicy[i] != nullptr) pracownicy[i]->wypisz();
         }
+    }
+
+    void zapiszDoPliku(const char *nazwaPliku) {
+        ofstream plik(nazwaPliku);
+        if (!plik) {
+            cerr << "Blad otwierania pliku" << endl;
+            return;
+        }
+
+        plik << il_pracownikow << "\n";
+        for(int i=0; i<il_pracownikow; ++i){
+            if (pracownicy[i] != nullptr) {
+                plik << pracownicy[i]->imie << " "
+                     << pracownicy[i]->nazwisko << " "
+                     << pracownicy[i]->stanowisko << " "
+                     << pracownicy[i]->il_minut << "\n";
+            }
+        }
+
+    }
+
+    static Teatr* wczytajZPliku(const char *nazwaPliku){
+        ifstream plik(nazwaPliku);
+        if (!plik) {
+                cerr << "Blad otwierania pliku" << endl;
+                return nullptr;
+            }
+        int il_p = 0;
+        plik >> il_p;
+        plik.ignore();
+        Teatr* teatr = new Teatr(il_p);
+        for(int i=0; i<il_p; ++i){
+            string imie, nazwisko;
+            int il_minut;
+            string stanowisko;
+            plik >> imie >> nazwisko >> stanowisko >> il_minut;
+            plik.ignore();
+            Stanowisko s;
+            if(stanowisko == "SZATNIARZ") s = Stanowisko::SZATNIARZ;
+            else if(stanowisko == "PROGRAMOWY") s = Stanowisko::PROGRAMOWY;
+            else if(stanowisko == "BUFETOWY") s = Stanowisko::BUFETOWY;
+            teatr->pracownicy[i] = new Pracownik(imie, nazwisko, s, il_minut);
+        }
+        return teatr;
     }
 };
 
@@ -167,6 +211,7 @@ struct Tydzien{
             tydzien->dyspo[pracownik->id] = this;
         }
     };
+
     Teatr* teatr;
     double pierwszy_dzien;
     Spektakl* dzien[7][3];
@@ -185,12 +230,12 @@ struct Tydzien{
         }
     }
 
-    ~Tydzien() {
-        for(int i = 0; i < teatr->il_pracownikow; ++i) {
-            delete dyspo[i];
-        }
-        delete[] dyspo;
-    }
+//    ~Tydzien() {
+//        for(int i = 0; i < teatr->il_pracownikow; ++i) {
+//            if(dyspo[i] != nullptr)delete dyspo[i];
+//        }
+//        delete[] dyspo;
+//    }
 
     void wpisz_spektakle(){
         double data = pierwszy_dzien;
@@ -223,67 +268,12 @@ struct Tydzien{
         }
         cout << endl;
     }
-
 };
 
 int main(){
-    Pracownik p1("Antoni", "Skrzyniarz", PROGRAMOWY, 0);
-    Pracownik p2("Weronika", "Nagawiecka", PROGRAMOWY, 450);
-    Pracownik p3("Szymon", "Kuczek", PROGRAMOWY, 605);
-    Pracownik p4("Paulina", "Filimon", PROGRAMOWY, 520);
-    Pracownik p5("Julia", "Pietron", BUFETOWY, 480);
-    Pracownik p6("Aleksandra", "Sek", BUFETOWY, 295);
-    Pracownik p7("Aleksandra", "Guzy", BUFETOWY, 300);
-    Pracownik p8("Paulina", "Sokolowska", BUFETOWY, 410);
-    Pracownik p9("Julia", "Ciembka", BUFETOWY, 380);
-    Pracownik p10("Ignacy", "Skrzyniarz", SZATNIARZ, 390);
-    Pracownik p11("Olga", "Wiecek", SZATNIARZ, 470);
-    Pracownik p12("Iga", "Kozlowska", SZATNIARZ, 410);
-    Pracownik p13("Zofia", "Watroba", SZATNIARZ, 450);
-    Pracownik p14("Barbara", "Stojek", SZATNIARZ, 700);
-    Pracownik p15("Dominika", "Piatek", SZATNIARZ, 540);
-    Pracownik p16("Szczepan", "Lompe", SZATNIARZ, 290);
-    Pracownik p17("Katarzyna", "Pikul", SZATNIARZ, 290);
-    Pracownik p18("Laura", "Kamasz", SZATNIARZ, 370);
-    Pracownik p19("Lilianna", "Noga", SZATNIARZ, 320);
-    Pracownik p20("Celina", "Wojtanowska", SZATNIARZ, 370);
-    Pracownik p21("Jakub", "Drewnicki", SZATNIARZ, 270);
-    Pracownik p22("Julia", "Krawczyk", SZATNIARZ, 270);
-    Pracownik p23("Maja", "Duszak", SZATNIARZ, 410);
-    Pracownik p24("Patryk", "Kozlowski", SZATNIARZ, 350);
-    Pracownik p25("Tosia", "Malecka", SZATNIARZ, 550);
-    Pracownik p26("Zuzanna", "Adamowicz", SZATNIARZ, 280);
-
-    Teatr teatrStary(26);
-    teatrStary.dodaj_pracownika(&p1, 0);
-    teatrStary.dodaj_pracownika(&p2, 1);
-    teatrStary.dodaj_pracownika(&p3, 2);
-    teatrStary.dodaj_pracownika(&p4, 3);
-    teatrStary.dodaj_pracownika(&p5, 4);
-    teatrStary.dodaj_pracownika(&p6, 5);
-    teatrStary.dodaj_pracownika(&p7, 6);
-    teatrStary.dodaj_pracownika(&p8, 7);
-    teatrStary.dodaj_pracownika(&p9, 8);
-    teatrStary.dodaj_pracownika(&p10, 9);
-    teatrStary.dodaj_pracownika(&p11, 10);
-    teatrStary.dodaj_pracownika(&p12, 11);
-    teatrStary.dodaj_pracownika(&p13, 12);
-    teatrStary.dodaj_pracownika(&p14, 13);
-    teatrStary.dodaj_pracownika(&p15, 14);
-    teatrStary.dodaj_pracownika(&p16, 15);
-    teatrStary.dodaj_pracownika(&p17, 16);
-    teatrStary.dodaj_pracownika(&p18, 17);
-    teatrStary.dodaj_pracownika(&p19, 18);
-    teatrStary.dodaj_pracownika(&p20, 19);
-    teatrStary.dodaj_pracownika(&p21, 20);
-    teatrStary.dodaj_pracownika(&p22, 21);
-    teatrStary.dodaj_pracownika(&p23, 22);
-    teatrStary.dodaj_pracownika(&p24, 23);
-    teatrStary.dodaj_pracownika(&p25, 24);
-    teatrStary.dodaj_pracownika(&p26, 25);
-
-    teatrStary.wypisz();
-    Tydzien t1(&teatrStary, 2.40325);
+    Teatr* teatrStary = Teatr::wczytajZPliku("teatrStary.txt");
+    teatrStary->wypisz();
+    Tydzien t1(teatrStary, 2.40325);
     t1.wpisz_spektakle();
     t1.wpisz_dyspo();
     t1.wypisz_grafik();
