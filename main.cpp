@@ -230,13 +230,6 @@ struct Tydzien{
         }
     }
 
-//    ~Tydzien() {
-//        for(int i = 0; i < teatr->il_pracownikow; ++i) {
-//            if(dyspo[i] != nullptr)delete dyspo[i];
-//        }
-//        delete[] dyspo;
-//    }
-
     void wpisz_spektakle(){
         double data = pierwszy_dzien;
         for(int i=0; i<7; ++i){
