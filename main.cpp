@@ -268,13 +268,51 @@ struct Tydzien{
         }
         cout << endl;
     }
+
+    static Tydzien* wczytajZPliku(const char *nazwaPliku, Teatr* teatr){
+        ifstream plik(nazwaPliku);
+        if (!plik) {
+                cerr << "Blad otwierania pliku" << endl;
+                return nullptr;
+        }
+
+        double data;
+        plik >> data;
+        plik.ignore();
+        Tydzien* tydzien = new Tydzien(teatr, data);
+
+        for(int i=0; i<7; ++i){
+            int il = 0;
+            plik >> il;
+            plik.ignore();
+            for(int j=0; j<il && j<3; ++j){
+                tydzien->dzien[i][j] = new Spektakl();
+                getline(plik, tydzien->dzien[i][j]->nazwa);
+                plik >> tydzien->dzien[i][j]->godzina_rozpoczeczia
+                >> tydzien->dzien[i][j]->czas_trwania
+                >> tydzien->dzien[i][j]->scena
+                >> tydzien->dzien[i][j]->il_pracownikow
+                >> tydzien->dzien[i][j]->bufetowy_potrzebny;
+                plik.ignore();
+                tydzien->dzien[i][j]->data = data;
+                if (tydzien->dzien[i][j]->il_pracownikow > 0){
+                    tydzien->dzien[i][j]->pracownicy = new Pracownik*[tydzien->dzien[i][j]->il_pracownikow];
+                    for (int k = 0; k < tydzien->dzien[i][j]->il_pracownikow; ++k) {
+                        tydzien->dzien[i][j]->pracownicy[k] = nullptr;
+                    }
+                } else tydzien->dzien[i][j]->pracownicy = nullptr;
+            }
+            data += 0.1;
+        }
+
+    return tydzien;
+    }
+
 };
 
 int main(){
     Teatr* teatrStary = Teatr::wczytajZPliku("teatrStary.txt");
     teatrStary->wypisz();
-    Tydzien t1(teatrStary, 2.40325);
-    t1.wpisz_spektakle();
-    t1.wpisz_dyspo();
-    t1.wypisz_grafik();
+    Tydzien* t1 = Tydzien::wczytajZPliku("tydzien.txt", teatrStary);
+    t1->wypisz_grafik();
 }
