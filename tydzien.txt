@@ -1,18 +1,23 @@
+1234
 0.302
 0
 0
 0
+
 1
 Rok z zycia codziennego
 17:00 170 SK 6 1
+
 1
 Rok z zycia codziennego
 17:00 170 SK 6 1
+
 2
 Halka
 17:00 210 DS 6 1
 Paw krolowej
 18:00 95 NS 2 1
+
 3
 Salon Poezji
 11:00 80 DS 4 0
