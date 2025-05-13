@@ -56,7 +56,7 @@ Godzina operator-(const Godzina& g1, const Godzina& g2){
         int diff = min1 - min2;
         if (diff < 0) diff += 24 * 60;
         return Godzina(diff / 60, diff % 60);
-    }
+}
 
 struct Data {
     int dzien;
@@ -90,19 +90,33 @@ struct Data {
             rok++;
         }
     }
+
+    friend ostream& operator<<(ostream& out, const Data& d) {
+        out << setfill('0') << setw(2) << d.dzien << "."
+            << setw(2) << d.miesiac << "."
+            << setw(4) << d.rok;
+        return out;
+    }
+
+    friend istream& operator>>(istream& in, Data& d) {
+        char delimiter;
+        in >> d.dzien >> delimiter >> d.miesiac >> delimiter >> d.rok;
+        return in;
+    }
 };
 
-ostream& operator<<(ostream& out, const Data& d) {
-    out << setfill('0') << setw(2) << d.dzien << "."
-        << setw(2) << d.miesiac << "."
-        << setw(4) << d.rok;
-    return out;
-}
+bool operator==(const std::string& s_data, const Data& d) {
+    istringstream ss(s_data);
+    int dzien, miesiac, rok;
+    char dot1, dot2;
 
-istream& operator>>(istream& in, Data& d) {
-    char delimiter;
-    in >> d.dzien >> delimiter >> d.miesiac >> delimiter >> d.rok;
-    return in;
+    ss >> dzien >> dot1 >> miesiac >> dot2 >> rok;
+
+    if (ss.fail() || dot1 != '.' || dot2 != '.') {
+        return false;
+    }
+
+    return (d.dzien == dzien && d.miesiac == miesiac && d.rok == rok);
 }
 
 struct Pracownik{
@@ -166,6 +180,14 @@ struct Teatr{
         return teatr;
     }
 
+    Pracownik* szukajPracownika(string imie, string nazwisko){
+        for(int i=0; i<il_pracownikow; ++i){
+            Pracownik* pracownik = pracownicy[i];
+            if(pracownik->imie == imie && pracownik->nazwisko == nazwisko)
+                return pracownik;
+        }
+        return nullptr;
+    }
 };
 
 struct Spektakl{
@@ -220,8 +242,7 @@ struct MiesiacPracy{
             cerr << "Blad otwierania pliku miesiac" << endl;
             return;
         }
-        int miesiac_id;
-        plik >> miesiac_id;
+        plik >> this->miesiac_id;
         plik.ignore();
         for(int i=0; i<teatr->il_pracownikow; ++i){
             int id;
@@ -234,6 +255,21 @@ struct MiesiacPracy{
             }
             plik.ignore();
         }
+    }
+
+    void zapiszCzasPracyDoPliku(const char *nazwaPliku) {
+        ofstream plik(nazwaPliku);
+        if (!plik) {
+            cerr << "Blad otwierania pliku do zapisu" << endl;
+            return;
+        }
+        plik << miesiac_id << '\n';
+
+        for (int i = 0; i < teatr->il_pracownikow; ++i) {
+            plik << teatr->pracownicy[i]->id << ' ' << czas_pracy[i].czas << '\n';
+        }
+
+        plik.close();
     }
 
     int miesiac_id;
@@ -262,7 +298,7 @@ struct Tydzien{
     static Tydzien* wczytajZPliku(const char *nazwaPliku){
         ifstream plik(nazwaPliku);
         if (!plik) {
-                cerr << "Blad otwierania pliku" << endl;
+                cerr << "Blad otwierania pliku teatr" << endl;
                 return nullptr;
         }
         int tydzien_id;
@@ -335,10 +371,8 @@ Dyspo** wczytajDyspoZPliku(const char* nazwaPliku, int il_pracownikow){
         plik >> dyspo[k]->pracownik_id;
         for(int i=0; i<7; ++i){
             plik >> dyspo[k]->zmiany[i];
-            cout << dyspo[k]->zmiany[i];
         }
         plik.ignore();
-        cout << endl;
     }
     return dyspo;
 }
@@ -411,10 +445,17 @@ struct TydzienPracy{
     int znajdz_pracownika_min(int i, int j, Stanowisko stanowisko){
         int min_id = -1;
         for(int k=0; k<teatr->il_pracownikow; ++k){
-            if((stanowisko == Stanowisko::SZATNIARZ || teatr->pracownicy[k]->stanowisko == stanowisko)
+            if((teatr->pracownicy[k]->stanowisko == stanowisko)
                && dyspo[k]->zmiany[i] && (min_id == -1 || tymczasowy_czas_pracy[k].czas < tymczasowy_czas_pracy[min_id].czas)
                 && !czy_pracownik_pracuje_w_ten_dzien(teatr->pracownicy[k],i,j))
                 min_id = k;
+        }
+        if(stanowisko == Stanowisko::SZATNIARZ && min_id == -1){
+            for(int k=0; k<teatr->il_pracownikow; ++k){
+                if(dyspo[k]->zmiany[i] && (min_id == -1 || tymczasowy_czas_pracy[k].czas < tymczasowy_czas_pracy[min_id].czas)
+                   && !czy_pracownik_pracuje_w_ten_dzien(teatr->pracownicy[k],i,j))
+                    min_id = k;
+            }
         }
         return min_id;
     }
@@ -489,21 +530,142 @@ struct TydzienPracy{
         for(int i=0; i<7; ++i){
             for(int j=0; j<3; ++j){
                 if(tydzien->dzien[i][j]!=nullptr){
-                    cout << tydzien->dzien[i][j]->nazwa << endl;
-                    for(int k=0; k<6; ++k){
+                    cout << tydzien->dzien[i][j]->data << " " << tydzien->dzien[i][j]->nazwa << endl;
+                    for(int k=0; k<tydzien->dzien[i][j]->il_pracownikow; ++k){
                         if(pracujacy[i][j][k] != nullptr)
                             pracujacy[i][j][k]->wypisz();
+                        else
+                            cout << "BRAK!" << endl;
                     }
                 }
             }
         }
     }
+
+    void zapiszZmianyDoPliku(const char* nazwaPliku){
+        ofstream plik(nazwaPliku);
+        if (!plik) {
+            cerr << "Blad otwierania pliku grafik, proba zapisu niepomyslna" << endl;
+            return;
+        }
+
+        plik << "DATA,SCENA,SPEKTAKL,";
+        for (int i = 1; i <= 9; ++i) {
+            plik << i << ",";
+        }
+        plik << "\n";
+
+        for (int i = 0; i < 7; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                Spektakl* spektakl = tydzien->dzien[i][j];
+                if (spektakl != nullptr) {
+                    plik << spektakl->data << ","
+                         << spektakl->scena << ","
+                         << spektakl->nazwa << ",";
+
+                    for (int k = 0; k < spektakl->il_pracownikow; ++k) {
+                        Pracownik* pracownik = pracujacy[i][j][k];
+                        if (pracownik != nullptr) {
+                            plik << pracownik->imie << " "
+                                 << pracownik->nazwisko << ",";
+                        } else {
+                            plik << "BRAK,";
+                        }
+                    }
+                    plik << "\n";
+                }
+            }
+        }
+
+        plik.close();
+    }
+
+    void wczytajZmianyZPliku(const char* nazwaPliku){
+        ifstream plik(nazwaPliku);
+        if (!plik) {
+            cerr << "Blad otwierania pliku grafik, proba odczytu niepomyslna" << endl;
+            return;
+        }
+
+        string linia;
+        string komorka;
+        getline(plik, linia);
+        for(int i=0; i<7; ++i){
+            for(int j=0; j<3; ++j){
+                Spektakl* spektakl = tydzien->dzien[i][j];
+                if(spektakl != nullptr){
+                    string data;
+                    getline(plik, data, ',');
+                    string scena;
+                    getline(plik, scena, ',');
+                    string nazwa;
+                    getline(plik, nazwa, ',');
+                    if(data == spektakl->data && scena == spektakl->scena && nazwa == spektakl->nazwa){
+                        for(int k=0; k<spektakl->il_pracownikow; ++k){
+                            string imie_i_nazwisko;
+                            getline(plik, imie_i_nazwisko, ',');
+                            if(imie_i_nazwisko == "BRAK")
+                                pracujacy[i][j][k] = nullptr;
+                            else{
+                                size_t spacja = imie_i_nazwisko.find(' ');
+                                string imie = imie_i_nazwisko.substr(0, spacja);
+                                string nazwisko = imie_i_nazwisko.substr(spacja + 1);
+                                Pracownik* pracownik = teatr->szukajPracownika(imie, nazwisko);
+                                if(pracownik != nullptr)
+                                    pracujacy[i][j][k] = pracownik;
+                                else{
+                                    cerr << "Blad wczytajZmianyZPliku - brak pracownika: " << imie << " " << nazwisko << endl;
+                                    pracujacy[i][j][k] = nullptr;
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        cerr << "Blad wczytajZmianyZPliku - dane spektaklu niepoprawne, oczekiwane: " <<
+                        spektakl->data << " " << spektakl->scena << " " << spektakl->nazwa << endl <<
+                        "Na wejsciu: " << data << " " << scena << " " << nazwa << endl;
+                        return;
+                    }
+                    getline(plik, linia);
+                }
+            }
+        }
+        plik.close();
+    }
+
+    void zaktualizujTymczasowyCzasPracy(){
+        for(int i=0; i<teatr->il_pracownikow; ++i){
+            tymczasowy_czas_pracy[i] = miesiac->czas_pracy[i];
+        }
+        for(int i=0; i<7; ++i){
+            for(int j=0; j<3; ++j){
+                Spektakl* spektakl = tydzien->dzien[i][j];
+                if(spektakl != nullptr){
+                    for(int k=0; k<spektakl->il_pracownikow; ++k){
+                        Pracownik* pracownik = pracujacy[i][j][k];
+                        if(pracownik != nullptr){
+                            tymczasowy_czas_pracy[pracownik->id].czas += spektakl->czas_trwania;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void zatwierdzZmiany(const char* nazwaPliku){
+        zaktualizujTymczasowyCzasPracy();
+        miesiac->czas_pracy = tymczasowy_czas_pracy;
+        miesiac->zapiszCzasPracyDoPliku(nazwaPliku);
+    }
 };
 
 int main(){
-    TydzienPracy* tydzienPracy = TydzienPracy::zacznijTydzienPracy("teatr.txt", "miesiac.txt", "tydzien.txt", "dyspo_test1.txt");
+    TydzienPracy* tydzienPracy = TydzienPracy::zacznijTydzienPracy("teatr.txt", "miesiac.txt", "tydzien.txt", "dyspo_test3.txt");
     tydzienPracy->wypiszTeatr();
     tydzienPracy->wypiszTydzien();
-    tydzienPracy->przydziel_zmiany();
+    //tydzienPracy->przydziel_zmiany();
+    //tydzienPracy->zapiszZmianyDoPliku("grafikTeatr.csv");
+    tydzienPracy->wczytajZmianyZPliku("grafikTeatr.csv");
     tydzienPracy->wypiszGrafik();
+    tydzienPracy->zatwierdzZmiany("zatwierdzZmiany_test.txt");
 }
