@@ -1,0 +1,20 @@
+tydzien_id;data;liczba_spektakli;nazwa;godzina_rozpoczecia;czas_trwania;scena;il_pracownikow;bufetowy_potrzebny
+1234;03.02.2024;;;;;;;
+;03.02.2024;0;;;;;;
+;04.02.2024;2;;;;;;
+;;;Magnetyzm serc;11:00;70;NS;4;1
+;;;Wesele;17:00;140;DS;6;1
+;05.02.2024;2;;;;;;
+;;;Magnetyzm serc;11:00;70;NS;4;1
+;;;Wesele;17:00;140;DS;6;1
+;06.02.2024;1;;;;;;
+;;;Rok z zycia codziennego;17:00;170;SK;6;1
+;07.02.2024;1;;;;;;
+;;;Rok z zycia codziennego;17:00;170;SK;6;1
+;08.02.2024;2;;;;;;
+;;;Halka;17:00;210;DS;6;1
+;;;Paw krolowej;18:00;95;NS;2;1
+;09.02.2024;3;;;;;;
+;;;Salon Poezji;11:00;80;DS;4;1
+;;;Halka;17:00;210;DS;6;1
+;;;Paw krolowej;18:00;95;NS;2;1

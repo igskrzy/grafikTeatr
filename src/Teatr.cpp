@@ -1,0 +1,78 @@
+#include "Teatr.h"
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
+Teatr::Teatr(int il_pracownikow): il_pracownikow(il_pracownikow) {
+    pracownicy = new Pracownik*[il_pracownikow];
+    for(int i=0; i<il_pracownikow; ++i){
+        pracownicy[i] = nullptr;
+    }
+}
+
+Teatr::~Teatr(){ delete[] pracownicy; }
+
+void Teatr::wypisz(){
+    std::cout << "Pracownicy Teatru Starego: " << std::endl;
+    for(int i=0; i<il_pracownikow; ++i){
+        if(pracownicy[i] != nullptr) pracownicy[i]->wypisz();
+    }
+}
+
+Teatr* Teatr::wczytajZPliku(const char* nazwaPliku) {
+    std::ifstream plik(nazwaPliku);
+    if (!plik) {
+        std::cerr << "Blad otwierania pliku teatr" << std::endl;
+        return nullptr;
+    }
+
+    std::string linia, pole;
+
+    if (!std::getline(plik, linia)) {
+        std::cerr << "Blad odczytu pierwszej linii (il_pracownikow)" << std::endl;
+        return nullptr;
+    }
+    std::stringstream ss_pierwsza(linia);
+    std::getline(ss_pierwsza, pole, ';');
+    std::getline(ss_pierwsza, pole, ';');
+    int il_pracownikow = std::stoi(pole);
+
+    if (!std::getline(plik, linia)) {
+        std::cerr << "Brak nagłówków kolumn" << std::endl;
+        return nullptr;
+    }
+
+    Teatr* teatr = new Teatr(il_pracownikow);
+
+    for (int i = 0; i < il_pracownikow && std::getline(plik, linia); ++i) {
+        std::stringstream ss(linia);
+        int id;
+        std::string imie, nazwisko;
+        Stanowisko stanowisko;
+
+        std::getline(ss, pole, ';');
+        id = std::stoi(pole);
+
+        std::getline(ss, imie, ';');
+        std::getline(ss, nazwisko, ';');
+
+        std::getline(ss, pole, ';');
+        std::stringstream stanowisko_ss(pole);
+        stanowisko_ss >> stanowisko;
+
+        teatr->pracownicy[i] = new Pracownik(id, imie, nazwisko, stanowisko);
+    }
+
+    return teatr;
+}
+
+
+Pracownik* Teatr::szukajPracownika(std::string imie, std::string nazwisko){
+    for(int i=0; i<il_pracownikow; ++i){
+        Pracownik* pracownik = pracownicy[i];
+        if(pracownik->imie == imie && pracownik->nazwisko == nazwisko)
+            return pracownik;
+    }
+    return nullptr;
+}
