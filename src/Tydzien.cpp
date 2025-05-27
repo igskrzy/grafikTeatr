@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 Tydzien::Tydzien(int tydzien_id, Data pierwszy_dzien): tydzien_id(tydzien_id), pierwszy_dzien(pierwszy_dzien) {
     for (int i = 0; i < 7; ++i)
@@ -21,15 +22,13 @@ Tydzien::~Tydzien(){
 Tydzien* Tydzien::wczytajZPliku(const char* nazwaPliku) {
     std::ifstream plik(nazwaPliku);
     if (!plik) {
-        std::cerr << "Blad otwierania pliku tydzien" << std::endl;
-        return nullptr;
+        throw std::runtime_error("Blad w Tydzien::wczytajZPliku: Blad otwierania pliku");
     }
 
     std::string linia;
 
     if (!std::getline(plik, linia)) {
-        std::cerr << "Blad odczytu naglowkow" << std::endl;
-        return nullptr;
+        throw std::runtime_error("Blad w Tydzien::wczytajZPliku: Blad odczytu naglowkow");
     }
 
     std::string pole;

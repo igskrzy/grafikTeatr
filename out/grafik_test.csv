@@ -1,12 +1,12 @@
-DATA;SCENA;SPEKTAKL;1;2;3;4;5;6;7;8;9
-04.02.2024;NS;Magnetyzm serc;Lena Nowicka;Emilia Wojcik;Jakub Szymanski;Julia Sikora;;;;;
-04.02.2024;DS;Wesele;Maksymilian Kowal;Filip Mazur;Wiktoria Jankowska;Szymon Walczak;Jan Ostrowski;Zofia Pawlak;;;
-05.02.2024;NS;Magnetyzm serc;Oliwia Zielinska;Natalia Lewandowska;Jan Ostrowski;Hanna Marciniak;;;;;
-05.02.2024;DS;Wesele;Igor Baran;Kacper Gorski;Zofia Pawlak;Bartosz Grabowski;Julia Sikora;Szymon Walczak;;;
-06.02.2024;SK;Rok z zycia codziennego;Lena Nowicka;Aleksandra Wasilewska;Antoni Kaczmarek;Alicja Krol;Hanna Marciniak;Bartosz Grabowski;;;
-07.02.2024;SK;Rok z zycia codziennego;Oliwia Zielinska;Emilia Wojcik;Nikola Dudek;Tymon Zawadzki;Gabriela Kubiak;Antoni Kaczmarek;;;
-08.02.2024;DS;Halka;Maksymilian Kowal;Natalia Lewandowska;Hubert Wieczorek;Liliana Wrona;Nadia Czerwinska;Nikola Dudek;;;
-08.02.2024;NS;Paw krolowej;Igor Baran;Filip Mazur;;;;;;;
-09.02.2024;DS;Salon Poezji;Igor Baran;Kacper Gorski;Gabriela Kubiak;Nadia Czerwinska;;;;;
-09.02.2024;DS;Halka;Lena Nowicka;Aleksandra Wasilewska;Mateusz Witkowski;Jakub Szymanski;Wiktoria Jankowska;Alicja Krol;;;
-09.02.2024;NS;Paw krolowej;Oliwia Zielinska;Kacper Gorski;;;;;;;
+DATA;SCENA;SPEKTAKL;1;2;3;4;5;6;7;8;9;
+04.02.2024;NS;Magnetyzm serc;Lena Nowicka;Emilia Wojcik;Jakub Szymanski;Julia Sikora;
+04.02.2024;DS;Wesele;Maksymilian Kowal;Filip Mazur;Wiktoria Jankowska;Szymon Walczak;Jan Ostrowski;Zofia Pawlak;
+05.02.2024;NS;Magnetyzm serc;Oliwia Zielinska;Natalia Lewandowska;Jan Ostrowski;Hanna Marciniak;
+05.02.2024;DS;Wesele;Igor Baran;Kacper Gorski;Zofia Pawlak;Bartosz Grabowski;Julia Sikora;Szymon Walczak;
+06.02.2024;SK;Rok z zycia codziennego;Lena Nowicka;Aleksandra Wasilewska;Antoni Kaczmarek;Alicja Krol;Hanna Marciniak;Bartosz Grabowski;
+07.02.2024;SK;Rok z zycia codziennego;Oliwia Zielinska;Emilia Wojcik;Nikola Dudek;Tymon Zawadzki;Gabriela Kubiak;Antoni Kaczmarek;
+08.02.2024;DS;Halka;Maksymilian Kowal;Natalia Lewandowska;Hubert Wieczorek;Liliana Wrona;Nadia Czerwinska;Nikola Dudek;
+08.02.2024;NS;Paw krolowej;Igor Baran;Filip Mazur;
+09.02.2024;DS;Salon Poezji;Igor Baran;Kacper Gorski;Gabriela Kubiak;Nadia Czerwinska;
+09.02.2024;DS;Halka;Lena Nowicka;Aleksandra Wasilewska;Mateusz Witkowski;Jakub Szymanski;Wiktoria Jankowska;Alicja Krol;
+09.02.2024;NS;Paw krolowej;Oliwia Zielinska;Kacper Gorski;

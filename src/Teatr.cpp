@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 Teatr::Teatr(int il_pracownikow): il_pracownikow(il_pracownikow) {
     pracownicy = new Pracownik*[il_pracownikow];
@@ -23,15 +24,13 @@ void Teatr::wypisz(){
 Teatr* Teatr::wczytajZPliku(const char* nazwaPliku) {
     std::ifstream plik(nazwaPliku);
     if (!plik) {
-        std::cerr << "Blad otwierania pliku teatr" << std::endl;
-        return nullptr;
+        throw std::runtime_error("Blad w Teatr::wczytajZPliku: Blad otwierania pliku teatr");
     }
 
     std::string linia, pole;
 
     if (!std::getline(plik, linia)) {
-        std::cerr << "Blad odczytu pierwszej linii (il_pracownikow)" << std::endl;
-        return nullptr;
+        throw std::runtime_error("Blad w Teatr::wczytajZPliku: Blad odczytu pierwszej linii (il_pracownikow)");
     }
     std::stringstream ss_pierwsza(linia);
     std::getline(ss_pierwsza, pole, ';');
@@ -39,8 +38,7 @@ Teatr* Teatr::wczytajZPliku(const char* nazwaPliku) {
     int il_pracownikow = std::stoi(pole);
 
     if (!std::getline(plik, linia)) {
-        std::cerr << "Brak nagłówków kolumn" << std::endl;
-        return nullptr;
+        throw std::runtime_error("Blad w Teatr::wczytajZPliku: Brak nagłówków kolumn");
     }
 
     Teatr* teatr = new Teatr(il_pracownikow);

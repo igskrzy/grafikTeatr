@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 TydzienPracy::TydzienPracy(): teatr(nullptr), miesiac(nullptr), tydzien(nullptr), dyspo(nullptr), tymczasowy_czas_pracy(nullptr) {
     for(int i=0; i<7; ++i){
@@ -43,14 +44,13 @@ TydzienPracy* TydzienPracy::zacznijTydzienPracy(const char* plikTeatr, const cha
     }
     Tydzien* tydzien = Tydzien::wczytajZPliku(plikTydzien);
     tydzienPracy->tydzien = tydzien;
-    Dyspo** dyspo = wczytajDyspoZPliku(plikDyspo, teatr->il_pracownikow);
+    Dyspo** dyspo = wczytajDyspoZPliku(plikDyspo, teatr->il_pracownikow, tydzien);
     tydzienPracy->dyspo = dyspo;
     if(tydzien->tydzien_id == dyspo[0]->tydzien_id)
         return tydzienPracy;
     else{
         std::cout << tydzien->tydzien_id << " " << dyspo[0]->tydzien_id << std::endl;
-        std::cerr << "Blad: tydzien::tydzien_id != dyspo[0]::tydzien_id" << std::endl;
-        return nullptr;
+        throw std::runtime_error("Blad: tydzien::tydzien_id != dyspo[0]::tydzien_id");
     }
 }
 
@@ -101,6 +101,8 @@ bool TydzienPracy::czy_pracownik_pracuje_w_ten_dzien(Pracownik* pracownik, int i
 }
 
 void TydzienPracy::przydziel_zmiany(){
+    if(teatr == nullptr || tydzien == nullptr || miesiac == nullptr || dyspo == nullptr)
+        return;
     for(int i=0; i<teatr->il_pracownikow; ++i){
         tymczasowy_czas_pracy[i].czas = miesiac->czas_pracy[i].czas;
     }
@@ -172,8 +174,7 @@ void TydzienPracy::wypiszGrafik(){
 void TydzienPracy::zapiszZmianyDoPliku(const char* nazwaPliku){
     std::ofstream plik(nazwaPliku);
     if (!plik) {
-        std::cerr << "Blad otwierania pliku grafik, proba zapisu niepomyslna" << std::endl;
-        return;
+        throw std::runtime_error("Blad otwierania pliku w TydzienPracy::zapiszZmianyDoPliku, proba zapisu niepomyslna");
     }
 
     plik << "DATA;SCENA;SPEKTAKL;";
@@ -203,15 +204,14 @@ void TydzienPracy::zapiszZmianyDoPliku(const char* nazwaPliku){
             }
         }
     }
-
+    std::cout << "Zapisano grafik do pliku " << nazwaPliku << std::endl;
     plik.close();
 }
 
 void TydzienPracy::wczytajZmianyZPliku(const char* nazwaPliku){
     std::ifstream plik(nazwaPliku);
     if (!plik) {
-        std::cerr << "Blad otwierania pliku grafik, proba odczytu niepomyslna" << std::endl;
-        return;
+        throw std::runtime_error("Blad otwierania pliku w TydzienPracy::wczytajZmianyZPliku, proba odczytu niepomyslna");
     }
 
     std::string linia;
@@ -241,22 +241,23 @@ void TydzienPracy::wczytajZmianyZPliku(const char* nazwaPliku){
                             if(pracownik != nullptr)
                                 pracujacy[i][j][k] = pracownik;
                             else{
-                                std::cerr << "Blad wczytajZmianyZPliku - brak pracownika: " << imie << " " << nazwisko << std::endl;
-                                pracujacy[i][j][k] = nullptr;
+                                std::cerr << "Brak pracownika: " << imie << " " << nazwisko << std::endl;
+                                throw std::runtime_error("Blad w TydzienPracy::wczytajZmianyZPliku: brak pracownika");
                             }
                         }
                     }
                 }
                 else{
-                    std::cerr << "Blad wczytajZmianyZPliku - dane spektaklu niepoprawne, oczekiwane: " <<
+                    std::cerr << "Dane spektaklu niepoprawne, oczekiwane: " <<
                     spektakl->data << " " << spektakl->scena << " " << spektakl->nazwa << std::endl <<
                     "Na wejsciu: " << data << " " << scena << " " << nazwa << std::endl;
-                    return;
+                    throw std::runtime_error("Blad w TydzienPracy::wczytajZmianyZPliku - dane spektaklu niepoprawne");
                 }
                 std::getline(plik, linia);
             }
         }
     }
+    std::cout << "Wczytano grafik z pliku " << nazwaPliku << std::endl;
     plik.close();
 }
 
@@ -280,9 +281,12 @@ void TydzienPracy::zaktualizujTymczasowyCzasPracy(){
 }
 
 void TydzienPracy::zatwierdzZmiany(const char* nazwaPliku){
+    if(teatr == nullptr || tydzien == nullptr || miesiac == nullptr || dyspo == nullptr)
+        return;
     zaktualizujTymczasowyCzasPracy();
     for(int i=0; i<teatr->il_pracownikow; ++i){
         miesiac->czas_pracy[i].czas = tymczasowy_czas_pracy[i].czas;
     }
     miesiac->zapiszCzasPracyDoPliku(nazwaPliku);
+    std::cout << "Zapisano godziny pracy do pliku " << nazwaPliku << std::endl;
 }
