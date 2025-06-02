@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
+#include <algorithm>
 
 TydzienPracy::TydzienPracy(): teatr(nullptr), miesiac(nullptr), tydzien(nullptr), dyspo(nullptr), tymczasowy_czas_pracy(nullptr) {
     for(int i=0; i<7; ++i){
@@ -19,22 +21,33 @@ TydzienPracy::TydzienPracy(): teatr(nullptr), miesiac(nullptr), tydzien(nullptr)
 }
 
 TydzienPracy::~TydzienPracy(){
-    delete teatr;
     delete miesiac;
     delete tydzien;
     if (dyspo != nullptr){
         for (int i = 0; i < teatr->il_pracownikow; ++i){
             delete dyspo[i];
+            for (int j = 0; j < 7; ++j) {
+                delete[] zmiany_pracownikow[i][j];
+            }
+            delete[] zmiany_pracownikow[i];
         }
         delete[] dyspo;
     }
     delete[] tymczasowy_czas_pracy;
+    delete teatr;
 }
 
 TydzienPracy* TydzienPracy::zacznijTydzienPracy(const char* plikTeatr, const char* plikMiesiac, const char* plikTydzien, const char* plikDyspo){
     TydzienPracy* tydzienPracy = new TydzienPracy();
     Teatr* teatr = Teatr::wczytajZPliku(plikTeatr);
     tydzienPracy->teatr = teatr;
+    tydzienPracy->zmiany_pracownikow = new bool**[teatr->il_pracownikow];
+    for (int i = 0; i < teatr->il_pracownikow; ++i) {
+        tydzienPracy->zmiany_pracownikow[i] = new bool*[7];
+        for (int j = 0; j < 7; ++j) {
+            tydzienPracy->zmiany_pracownikow[i][j] = new bool[3]{false, false, false};
+        }
+    }
     MiesiacPracy* miesiac = new MiesiacPracy(teatr);
     miesiac->wczytajCzasPracyZPliku(plikMiesiac);
     tydzienPracy->miesiac = miesiac;
@@ -50,7 +63,7 @@ TydzienPracy* TydzienPracy::zacznijTydzienPracy(const char* plikTeatr, const cha
         return tydzienPracy;
     else{
         std::cout << tydzien->tydzien_id << " " << dyspo[0]->tydzien_id << std::endl;
-        throw std::runtime_error("Blad: tydzien::tydzien_id != dyspo[0]::tydzien_id");
+        throw std::runtime_error("tydzien::tydzien_id != dyspo[0]::tydzien_id");
     }
 }
 
@@ -58,117 +71,150 @@ void TydzienPracy::wypiszTeatr(){ teatr->wypisz(); }
 
 void TydzienPracy::wypiszTydzien(){ tydzien->wypisz(); }
 
-int TydzienPracy::znajdz_pracownika_min(int i, int j, Stanowisko stanowisko){
-    int min_id = -1;
-    for(int k=0; k<teatr->il_pracownikow; ++k){
-        if((teatr->pracownicy[k]->stanowisko == stanowisko)
-            && dyspo[k]->zmiany[i][j] && (min_id == -1 || tymczasowy_czas_pracy[k].czas < tymczasowy_czas_pracy[min_id].czas)
-            && !czy_pracownik_pracuje_w_ten_dzien(teatr->pracownicy[k],i,j)){
-                min_id = k;
-            }
+bool TydzienPracy::czy_spektakle_koliduja(int i, int j1, int j2){
+    int godzina_rozpoczecia1 = tydzien->dzien[i][j1]->godzina_rozpoczecia.toMinuty();
+    int godzina_rozpoczecia2 = tydzien->dzien[i][j2]->godzina_rozpoczecia.toMinuty();
+    int czas_trwania;
+    int roznica;
+    if(godzina_rozpoczecia1 <= godzina_rozpoczecia2){
+        czas_trwania = tydzien->dzien[i][j1]->czas_trwania;
+        roznica = godzina_rozpoczecia2 - godzina_rozpoczecia1 - czas_trwania;
     }
-    if(stanowisko == Stanowisko::SZATNIARZ && min_id == -1){
-        for(int k=0; k<teatr->il_pracownikow; ++k){
-            if(dyspo[k]->zmiany[i][j] && (min_id == -1 || tymczasowy_czas_pracy[k].czas < tymczasowy_czas_pracy[min_id].czas)
-                && !czy_pracownik_pracuje_w_ten_dzien(teatr->pracownicy[k],i,j)){
-                    min_id = k;
-                }
-        }
+    else{
+        czas_trwania = tydzien->dzien[i][j2]->czas_trwania;
+        roznica = godzina_rozpoczecia1 - godzina_rozpoczecia2 - czas_trwania;
     }
-    return min_id;
-}
-
-bool TydzienPracy::czy_pracownik_pracuje_w_ten_dzien(Pracownik* pracownik, int i, int j_s){
-    bool zmiany[3] = {false, false, false};
-    for(int j=0; j<3; ++j){
-        if(tydzien->dzien[i][j]!=nullptr){
-            for(int k=0; k<tydzien->dzien[i][j]->il_pracownikow; ++k){
-                if(pracownik == pracujacy[i][j][k]) zmiany[j] = true;
-            }
-        }
-    }
-    if(zmiany[j_s])return true;
-    else if(zmiany[0] && !zmiany[j_s % 2 + 1]){
-        int czas_trwania0 = tydzien->dzien[i][0]->czas_trwania;
-        int godzina_rozpoczecia0 = tydzien->dzien[i][0]->godzina_rozpoczecia.toMinuty();
-        int godzina_rozpoczecia1 = tydzien->dzien[i][j_s]->godzina_rozpoczecia.toMinuty();
-        int roznica = godzina_rozpoczecia1 - godzina_rozpoczecia0 - czas_trwania0;
-        if(roznica < 0)return true;
-        return false;
-    }
-    else if(zmiany[0] || zmiany[1] || zmiany[2]) return true;
+    if(roznica < 0)return true;
     return false;
 }
 
-void TydzienPracy::przydziel_zmiany(){
-    if(teatr == nullptr || tydzien == nullptr || miesiac == nullptr || dyspo == nullptr)
-        return;
-    for(int i=0; i<teatr->il_pracownikow; ++i){
-        tymczasowy_czas_pracy[i].czas = miesiac->czas_pracy[i].czas;
-    }
-    for(int i=0; i<7; ++i){
-        for(int j=0; j<3; ++j){
-            if(tydzien->dzien[i][j] != nullptr){
-                il_pracujacych[i][j] = 0;
-                bufetowy[i][j] = 0;
-                programowy[i][j] = 0;
-                if(!programowy[i][j]){
-                    int p_id = znajdz_pracownika_min(i,j,Stanowisko::PROGRAMOWY);
-                    if(p_id!=-1){
-                        tymczasowy_czas_pracy[p_id].czas += tydzien->dzien[i][j]->czas_trwania;
-                        pracujacy[i][j][0] = teatr->pracownicy[p_id];
-                        ++il_pracujacych[i][j];
-                        programowy[i][j] = true;
-                    }
-                }
-                if(!bufetowy[i][j] && tydzien->dzien[i][j]->bufetowy_potrzebny){
-                    int p_id = znajdz_pracownika_min(i,j,Stanowisko::BUFETOWY);
-                    if(p_id!=-1){
-                        tymczasowy_czas_pracy[p_id].czas += tydzien->dzien[i][j]->czas_trwania;
-                        pracujacy[i][j][1] = teatr->pracownicy[p_id];
-                        ++il_pracujacych[i][j];
-                        bufetowy[i][j] = true;
-                    }
-                }
-            }
+bool TydzienPracy::czy_pracownik_dostepny(int pracownik_id, int i, int j){
+    if(zmiany_pracownikow[pracownik_id][i][j]) return false;
+    int j2 = (j+1) % 3;
+    int j3 = (j+2) % 3;
+    if(zmiany_pracownikow[pracownik_id][i][j2] && czy_spektakle_koliduja(i,j,j2)) return false;
+    else if(zmiany_pracownikow[pracownik_id][i][j3] && czy_spektakle_koliduja(i,j,j3)) return false;
+    return true;
+}
+
+void TydzienPracy::dodaj_pracownika_do_zmiany(int i, int j, int id, int miejsce){
+    pracujacy[i][j][miejsce] = teatr->pracownicy[id];
+    tymczasowy_czas_pracy[id].czas += tydzien->dzien[i][j]->czas_trwania;
+    zmiany_pracownikow[id][i][j] = true;
+    il_pracujacych[i][j] += 1;
+}
+
+void TydzienPracy::przydziel_pracownikow(int i, int j, std::vector<int> dostepni_pracownicy){
+    il_pracujacych[i][j] = 0;
+    programowy[i][j] = false;
+    bufetowy[i][j] = false;
+
+    for (int id : dostepni_pracownicy) {
+        Stanowisko s = teatr->pracownicy[id]->stanowisko;
+        if (!programowy[i][j] && s == Stanowisko::PROGRAMOWY) {
+            programowy[i][j] = true;
+            dodaj_pracownika_do_zmiany(i, j, id, 0);
         }
+        else if (!bufetowy[i][j] && s == Stanowisko::BUFETOWY) {
+            bufetowy[i][j] = true;
+            dodaj_pracownika_do_zmiany(i, j, id, 1);
+        }
+        if (programowy[i][j] && bufetowy[i][j]) break;
     }
 
-    bool koniec = false;
-    while(!koniec){
-        koniec = true;
-        for(int i=0; i<7; ++i){
-            for(int j=0; j<3; ++j){
-                if(tydzien->dzien[i][j] != nullptr && il_pracujacych[i][j] < tydzien->dzien[i][j]->il_pracownikow){
-                    int p_id = znajdz_pracownika_min(i,j,Stanowisko::SZATNIARZ);
-                    if(p_id!=-1 && pracujacy[i][j][il_pracujacych[i][j]-1]->id != p_id){
-                        koniec = false;
-                        if(tydzien->dzien[i][j]!=nullptr && il_pracujacych[i][j] < tydzien->dzien[i][j]->il_pracownikow){
-                            tymczasowy_czas_pracy[p_id].czas += tydzien->dzien[i][j]->czas_trwania;
-                            pracujacy[i][j][il_pracujacych[i][j]] = teatr->pracownicy[p_id];
-                            ++il_pracujacych[i][j];
-                        }
-                    }
-                }
-            }
+    int miejsce_szatniarza = 2;
+    for (int id : dostepni_pracownicy) {
+        Stanowisko s = teatr->pracownicy[id]->stanowisko;
+        if (s == Stanowisko::SZATNIARZ && il_pracujacych[i][j] < tydzien->dzien[i][j]->il_pracownikow) {
+            dodaj_pracownika_do_zmiany(i, j, id, miejsce_szatniarza);
+            ++miejsce_szatniarza;
+        }
+        if (il_pracujacych[i][j] >= tydzien->dzien[i][j]->il_pracownikow){
+            break;
         }
     }
 }
 
-void TydzienPracy::wypiszGrafik(){
-    for(int i=0; i<7; ++i){
-        for(int j=0; j<3; ++j){
-            if(tydzien->dzien[i][j]!=nullptr){
-                std::cout << tydzien->dzien[i][j]->data << " " << tydzien->dzien[i][j]->nazwa << std::endl;
-                for(int k=0; k<tydzien->dzien[i][j]->il_pracownikow; ++k){
-                    if(pracujacy[i][j][k] != nullptr)
-                        pracujacy[i][j][k]->wypisz();
-                    else
-                    std::cout << "BRAK!" << std::endl;
-                }
+inline void TydzienPracy::sortuj_pracownikow(std::vector<int>& pracownicy) {
+    std::sort(pracownicy.begin(), pracownicy.end(),
+        [this](int a, int b) {
+            return tymczasowy_czas_pracy[a].czas < tymczasowy_czas_pracy[b].czas;
+        });
+}
+
+void TydzienPracy::uzupelnij_braki() {
+    struct Zmiana{ int i, j, brak, czas_trwania; };
+    std::vector<Zmiana> zmiany_z_brakami;
+    int suma_brakow = 0;
+    for (int i = 0; i < 7; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (!tydzien->dzien[i][j]) continue;
+            int potrzebni = tydzien->dzien[i][j]->il_pracownikow;
+            int obecni = il_pracujacych[i][j];
+            if (obecni < potrzebni) {
+                int brak = potrzebni - obecni;
+                zmiany_z_brakami.push_back({i, j, brak, tydzien->dzien[i][j]->czas_trwania});
+                suma_brakow += brak;
             }
         }
     }
+
+    if (zmiany_z_brakami.empty()) return;
+
+    std::sort(zmiany_z_brakami.begin(), zmiany_z_brakami.end(),
+    [](const Zmiana& a, const Zmiana& b) {
+        if (a.brak != b.brak) return a.brak > b.brak;
+        return a.czas_trwania > b.czas_trwania;
+    });
+
+    std::vector<int> pracownicy;
+    for (int k = 0; k < teatr->il_pracownikow; ++k) {
+        Stanowisko s = teatr->pracownicy[k]->stanowisko;
+        if (s != Stanowisko::PROGRAMOWY && s != Stanowisko::BUFETOWY) continue;
+        pracownicy.push_back(k);
+    }
+
+    sortuj_pracownikow(pracownicy);
+
+    for (auto& zm : zmiany_z_brakami) {
+       for (int pracownik : pracownicy) {
+            if (il_pracujacych[zm.i][zm.j] >= tydzien->dzien[zm.i][zm.j]->il_pracownikow)
+                break;
+            if (!dyspo[pracownik]->zmiany[zm.i][zm.j] || zmiany_pracownikow[pracownik][zm.i][zm.j] ||
+                !czy_pracownik_dostepny(pracownik, zm.i, zm.j)) continue;
+            dodaj_pracownika_do_zmiany(zm.i, zm.j, pracownik, il_pracujacych[zm.i][zm.j]);
+        }
+        sortuj_pracownikow(pracownicy);
+    }
+}
+
+void TydzienPracy::przydziel_zmiany(){
+    std::vector<std::pair<int, int>> zmiany;
+    for (int i = 0; i < 7; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (tydzien->dzien[i][j] != nullptr) {
+                zmiany.emplace_back(i, j);
+            }
+        }
+    }
+
+    std::sort(zmiany.begin(), zmiany.end(), [&](const auto& a, const auto& b) {
+        return tydzien->dzien[a.first][a.second]->czas_trwania > tydzien->dzien[b.first][b.second]->czas_trwania;
+    });
+
+    for (const auto& [i, j] : zmiany) {
+        std::vector<int> dostepni_pracownicy;
+        for (int k = 0; k < teatr->il_pracownikow; ++k) {
+            if (dyspo[k]->zmiany[i][j] && czy_pracownik_dostepny(k, i, j)) {
+                dostepni_pracownicy.push_back(k);
+            }
+        }
+
+        sortuj_pracownikow(dostepni_pracownicy);
+
+        przydziel_pracownikow(i, j, dostepni_pracownicy);
+    }
+    uzupelnij_braki();
 }
 
 void TydzienPracy::zapiszZmianyDoPliku(const char* nazwaPliku){
@@ -251,7 +297,7 @@ void TydzienPracy::wczytajZmianyZPliku(const char* nazwaPliku){
                     std::cerr << "Dane spektaklu niepoprawne, oczekiwane: " <<
                     spektakl->data << " " << spektakl->scena << " " << spektakl->nazwa << std::endl <<
                     "Na wejsciu: " << data << " " << scena << " " << nazwa << std::endl;
-                    throw std::runtime_error("Blad w TydzienPracy::wczytajZmianyZPliku - dane spektaklu niepoprawne");
+                    throw std::runtime_error("TydzienPracy::wczytajZmianyZPliku - dane spektaklu niepoprawne");
                 }
                 std::getline(plik, linia);
             }

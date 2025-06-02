@@ -24,21 +24,31 @@ void Teatr::wypisz(){
 Teatr* Teatr::wczytajZPliku(const char* nazwaPliku) {
     std::ifstream plik(nazwaPliku);
     if (!plik) {
-        throw std::runtime_error("Blad w Teatr::wczytajZPliku: Blad otwierania pliku teatr");
+        throw std::runtime_error("Teatr::wczytajZPliku: Blad otwierania pliku teatr");
     }
 
     std::string linia, pole;
 
     if (!std::getline(plik, linia)) {
-        throw std::runtime_error("Blad w Teatr::wczytajZPliku: Blad odczytu pierwszej linii (il_pracownikow)");
+        throw std::runtime_error("Teatr::wczytajZPliku: Blad odczytu pierwszej linii");
     }
     std::stringstream ss_pierwsza(linia);
     std::getline(ss_pierwsza, pole, ';');
+    if (pole != "il_pracownikow"){
+        std::cerr << "Naglowek: \"" << pole << "\", oczekiwano: \"il_pracownikow\"" << std::endl;
+        throw std::runtime_error("Teatr::wczytajZPliku: Blad odczytu naglowka");
+    }
     std::getline(ss_pierwsza, pole, ';');
-    int il_pracownikow = std::stoi(pole);
+    int il_pracownikow;
+    try{
+        il_pracownikow = std::stoi(pole);
+    } catch (const std::exception& e) {
+        std::cerr << "Proba zamiany \"" << pole << "\" na int" << std::endl;
+        throw e;
+    }
 
     if (!std::getline(plik, linia)) {
-        throw std::runtime_error("Blad w Teatr::wczytajZPliku: Brak nagłówków kolumn");
+        throw std::runtime_error("Teatr::wczytajZPliku: Brak nagłówków kolumn");
     }
 
     Teatr* teatr = new Teatr(il_pracownikow);

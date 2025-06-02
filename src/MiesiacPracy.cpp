@@ -25,16 +25,16 @@ void MiesiacPracy::wczytajCzasPracyZPliku(const char* nazwaPliku) {
 
     std::string linia;
     if (!std::getline(plik, linia)) {
-        throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: blad odczytu pierwszej linii");
+        throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: blad odczytu pierwszej linii");
     }
 
     std::stringstream ss(linia);
     std::string label, wartosc;
     if (!std::getline(ss, label, ';') || !std::getline(ss, wartosc)) {
-        throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: Blad formatu pierwszej linii");
+        throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: Blad formatu pierwszej linii");
     }
     if (label != "miesiac_id") {
-        throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: Niepoprawny naglowek: oczekiwano miesiac_id");
+        throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: Niepoprawny naglowek: oczekiwano miesiac_id");
     }
     miesiac_id = std::stoi(wartosc);
 
@@ -46,7 +46,7 @@ void MiesiacPracy::wczytajCzasPracyZPliku(const char* nazwaPliku) {
     for (int i = 0; i < teatr->il_pracownikow; ++i) {
         if (!std::getline(plik, linia)) {
             std::cerr << "Brak danych dla pracownika nr " << i << std::endl;
-            throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: Brak danych dla pracownika");
+            throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: Brak danych dla pracownika");
         }
 
         std::stringstream ss(linia);
@@ -54,7 +54,7 @@ void MiesiacPracy::wczytajCzasPracyZPliku(const char* nazwaPliku) {
 
         if (!std::getline(ss, idStr, ';') || !std::getline(ss, czasStr)) {
             std::cerr << "Blad formatu danych w linii " << i + 3 << std::endl;
-            throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: Blad formatu danych");
+            throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: Blad formatu danych");
         }
 
         int id = std::stoi(idStr);
@@ -62,7 +62,7 @@ void MiesiacPracy::wczytajCzasPracyZPliku(const char* nazwaPliku) {
         if (id != teatr->pracownicy[i]->id) {
             std::cerr << "Blad indeksowania pracownikow: id z pliku (" << id
                       << ") != id w pamieci (" << teatr->pracownicy[i]->id << ")" << std::endl;
-            throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: Blad indeksowania pracownikow");
+            throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: Blad indeksowania pracownikow");
         }
         czas_pracy[i].czas = std::stoi(czasStr);
     }
@@ -71,7 +71,7 @@ void MiesiacPracy::wczytajCzasPracyZPliku(const char* nazwaPliku) {
 void MiesiacPracy::zapiszCzasPracyDoPliku(const char *nazwaPliku) {
     std::ofstream plik(nazwaPliku);
     if (!plik) {
-        throw std::runtime_error("Blad w MiesiacPracy::wczytajCzasPracyZPliku: Blad otwierania pliku do zapisu");
+        throw std::runtime_error("MiesiacPracy::wczytajCzasPracyZPliku: Blad otwierania pliku do zapisu");
     }
 
     plik << "miesiac_id;" << miesiac_id << '\n';

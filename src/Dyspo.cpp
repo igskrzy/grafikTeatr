@@ -11,26 +11,26 @@ Dyspo::Dyspo(int pracownik_id, int tydzien_id) : pracownik_id(pracownik_id), tyd
 Dyspo** wczytajDyspoZPliku(const char* nazwaPliku, int il_pracownikow, Tydzien* tydzien) {
     std::ifstream plik(nazwaPliku);
     if (!plik) {
-        throw std::runtime_error("Blad w wczytajDyspoZPliku: Blad otwierania pliku");
+        throw std::runtime_error("wczytajDyspoZPliku: Blad otwierania pliku");
     }
 
     std::string linia;
     if (!std::getline(plik, linia)) {
-        throw std::runtime_error("Blad w wczytajDyspoZPliku: Blad odczytu pierwszej linii");
+        throw std::runtime_error("wczytajDyspoZPliku: Blad odczytu pierwszej linii");
     }
 
     std::stringstream ss(linia);
     std::string label, wartosc;
     if (!std::getline(ss, label, ';') || !std::getline(ss, wartosc)) {
-        throw std::runtime_error("Blad w wczytajDyspoZPliku: Blad formatu pierwszej linii");
+        throw std::runtime_error("wczytajDyspoZPliku: Blad formatu pierwszej linii");
     }
     if (label != "tydzien_id") {
-        throw std::runtime_error("Blad w wczytajDyspoZPliku: Niepoprawny naglowek, oczekiwano tydzien_id");
+        throw std::runtime_error("wczytajDyspoZPliku: Niepoprawny naglowek, oczekiwano tydzien_id");
     }
     int tydzien_id = std::stoi(wartosc);
 
     if (!std::getline(plik, linia)) {
-        throw std::runtime_error("Blad w wczytajDyspoZPliku: Brak naglowka kolumn");
+        throw std::runtime_error("wczytajDyspoZPliku: Brak naglowka kolumn");
     }
 
     Dyspo** dyspo = new Dyspo*[il_pracownikow];

@@ -38,7 +38,12 @@ Tydzien* Tydzien::wczytajZPliku(const char* nazwaPliku) {
     std::getline(plik, linia);
     std::stringstream ss1(linia);
     std::getline(ss1, pole, ';');
-    tydzien_id = std::stoi(pole);
+    try{
+        tydzien_id = std::stoi(pole);
+    } catch (const std::exception& e) {
+        std::cerr << "Proba zamiany \"" << pole << "\" na int" << std::endl;
+        throw e;
+    }
     std::getline(ss1, pole, ';');
     std::stringstream(pole) >> data;
 
@@ -49,7 +54,13 @@ Tydzien* Tydzien::wczytajZPliku(const char* nazwaPliku) {
         std::getline(ss2, pole, ';');
         std::getline(ss2, pole, ';');
         std::getline(ss2, pole, ';');
-        int ilosc_spektakli = std::stoi(pole);
+        int ilosc_spektakli;
+        try{
+            ilosc_spektakli = std::stoi(pole);
+        } catch (const std::exception& e) {
+            std::cerr << "Proba zamiany \"" << pole << "\" na int" << std::endl;
+            throw e;
+        }
         for (int j = 0; j < ilosc_spektakli && std::getline(plik, linia); ++j) {
             std::stringstream ss3(linia);
             std::getline(ss3, pole, ';');

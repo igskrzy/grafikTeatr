@@ -8,6 +8,8 @@
 #include "Dyspo.h"
 #include "Pracownik.h"
 
+#include <vector>
+
 struct TydzienPracy{
     Teatr* teatr;
     MiesiacPracy* miesiac;
@@ -16,6 +18,7 @@ struct TydzienPracy{
     int il_pracujacych[7][10];
     bool bufetowy[7][3];
     bool programowy[7][3];
+    bool*** zmiany_pracownikow;
     Dyspo** dyspo;
     CzasPracy* tymczasowy_czas_pracy;
 
@@ -29,13 +32,19 @@ struct TydzienPracy{
 
     void wypiszTydzien();
 
-    int znajdz_pracownika_min(int i, int j, Stanowisko stanowisko);
+    bool czy_spektakle_koliduja(int i, int j1, int j2);
 
-    bool czy_pracownik_pracuje_w_ten_dzien(Pracownik* pracownik, int i, int j_s);
+    bool czy_pracownik_dostepny(int pracownik_id, int i, int j);
+
+    void dodaj_pracownika_do_zmiany(int i, int j, int id, int miejsce);
+
+    void przydziel_pracownikow(int i, int j, std::vector<int> dostepni_pracownicy);
+
+    inline void sortuj_pracownikow(std::vector<int>& dostepni_pracownicy);
+
+    void uzupelnij_braki();
 
     void przydziel_zmiany();
-
-    void wypiszGrafik();
 
     void zapiszZmianyDoPliku(const char* nazwaPliku);
 
